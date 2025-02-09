@@ -1,0 +1,328 @@
+---
+title: "Exercício avaliativo de estatística computacional II"
+author: "Luiz Felipe Leal Venturi"
+date: "2025-02-09"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+options("scipen"=10)
+library(lpSolve)
+```
+# 1 Planejamento de Produção
+
+Variáveis de Decisão:
+
+x: Número de unidades do produto A a serem produzidas.
+
+y: Número de unidades do produto B a serem produzidas.
+
+Função Objetivo:
+
+Maximizar o lucro total:
+Lucro=$20x+30y$
+
+Restrições:
+
+Tempo de trabalho disponível: 
+$2x+y\leq80$
+
+Produção mínima de A: 
+$x\geq10$
+
+Produção mínima de B: 
+$y\geq5$ 
+
+Não negatividade: 
+$x\geq0$,$y\geq0$
+
+```{r echo=FALSE}
+maximizar_lucro <- function() {
+  f_objetivo <- c(20, 30)
+  
+  restricoes <- matrix(c(2, 1, 
+                          1, 0,   
+                          0, 1), 
+                        nrow = 3, byrow = TRUE)
+  
+  limites <- c(80, 10, 5)
+  
+  sinais <- c("<=", ">=", ">=")
+  
+  results <- lp(direction = "max",
+                  objective.in = f_objetivo,
+                  const.mat = restricoes,
+                  const.dir = sinais,
+                  const.rhs = limites)
+  
+  return(list(valores_otimos = results$solution,
+              lucro_maximo = results$objval))
+}
+
+maximizar_lucro()
+```
+
+
+# 2 Alocação de Recursos 
+
+Variáveis de Decisão:
+
+
+x: Número de hectares dedicados ao milho.
+
+
+y: Número de hectares dedicados ao trigo.
+
+Função Objetivo:
+
+Maximizar o lucro total:
+Lucro=$50x+70y$
+
+Restrições:
+
+Área total disponível:
+$x+y\leq100$
+
+Fertilizante disponível:
+$3x+2y\leq300$
+
+Água disponível:
+$2x+4y\leq400$
+
+Não negatividade:
+$x\geq0$,$y\geq0$
+
+```{r echo=FALSE}
+maximizar_lucro <- function(){
+lucro <- function(x){
+  x1 <- x[1]
+  x2 <- x[2]
+  lucro <- 50*x1+70*x2
+  return(-lucro)
+}
+p <- c(0,0)
+variaveis <- matrix(c(-1,-1,-3,-2,-2,-4),
+                    ncol = 2,
+                    byrow = TRUE)
+restricoes <- c(-100,-200,-300)
+results <- constrOptim(p,
+                       lucro,
+                       grad = NULL,
+                       ui=variaveis,
+                       ci=restricoes)
+return(list(valores_otimos = results$par,
+            lucro_maximo = -results$value))
+}
+
+maximizar_lucro()
+```
+
+
+# 3 Dieta Otimizada
+
+Variáveis de Decisão:
+
+x: Número de porções do alimento X.
+
+y: Número de porções do alimento Y.
+
+Função Objetivo:
+
+Minimizar o custo da dieta:
+
+Custo=$3x+2y$
+
+Restrições:
+
+Proteína mínima:
+
+$4x+2y\geq24$
+
+Gordura máxima:
+
+$x+3y\leq12$
+
+Não negatividade:
+
+$x\geq0$,$y\geq0$
+
+```{r echo=FALSE}
+minimizar_custo <- function() {
+  f_objetivo <- c(3, 2)
+  
+  restricoes <- matrix(c(4, 2, 1, 3),
+                        ncol = 2, byrow = TRUE)
+  
+  limites <- c(24, 12)
+  
+  sinais <- c(">=", "<=")
+  
+  results <- lp(direction = "min",
+                  objective.in = f_objetivo,
+                  const.mat = restricoes,
+                  const.dir = sinais,
+                  const.rhs = limites)
+  
+  return(list(valores_otimos = results$solution,
+              custo_minimo = results$objval))
+}
+
+minimizar_custo()
+```
+
+
+# 4 Ajuste de Rota
+
+Variáveis de Decisão:
+
+x: Quantidade de mercadorias transportadas para a cidade A.
+
+y: Quantidade de mercadorias transportadas para a cidade B.
+
+Função Objetivo:
+
+Minimizar a distância total:
+
+Distancia Total=$(10+0.5x^2)+(15+0.3y^2)$
+
+Restrições:
+
+Capacidade máxima de transporte:
+
+$x+y\leq50$
+
+Não negatividade:
+
+$x\geq0$,$y\geq0$
+
+```{r echo=FALSE}
+minimizar_distancia <- function() {
+  f_objetivo <- function(x) {
+    x1 <- x[1]
+    x2 <- x[2]
+    return(10 + 0.5 * x1^2 + 15 + 0.3 * x2^2) 
+  }
+  
+  x_inicial <- c(0,0)
+  
+  results <- optim(par = x_inicial, 
+                     fn = f_objetivo, 
+                     method = "L-BFGS-B", 
+                     lower = c(0, 0), 
+                     upper = c(50, 50), 
+                     control = list(fnscale = 1))
+  
+  return(list(valores_otimos = results$par,
+              distancia_minima = results$value))
+}
+minimizar_distancia()
+```
+
+
+# 5 Investimento Ótimo 
+
+Variáveis de Decisão:
+
+x: Quantidade investida no fundo $F_1$
+
+y: Quantidade investida no fundo $F_2$
+
+Função Objetivo:
+
+Maximizar o retorno total:
+
+Retorno$=0.08x+0.10y$
+
+Restrições:
+
+Total disponível para investimento:
+
+$x+y\leq100000$
+
+Risco médio ponderado:
+
+$0.05x+0.07y\leq0.06(x+y)$
+
+Não negatividade:
+
+$x\geq0$,$y\geq0$
+
+```{r echo=FALSE}
+
+objective_coef <- c(0.08, 0.10)
+
+constraint_matrix <- matrix(c(1, 1, 0.05, 0.07), nrow = 2, byrow = TRUE)
+
+constraint_direction <- c("<=", "<=")
+
+constraint_rhs <- c(100000, 6000)
+
+solution <- lp("max", objective_coef, constraint_matrix, constraint_direction, constraint_rhs)
+
+print("Valores ótimos")
+solution$solution
+print("Investimento máximo")
+solution$objval
+```
+
+
+# 6 Ajuste de Preços
+
+Variáveis de Decisão:
+
+- \( p1 \): Preço do produto \( P1 \)
+- \( p2 \): Preço do produto \( P2 \)
+
+Função Objetivo:
+
+Maximizar o lucro total:
+
+\(
+\text{Lucro} = (p1 - 10)D1(p1) + (p2 - 15)D2(p2)
+\)
+
+Substituindo as demandas:
+
+\(
+\text{Lucro} = (p1 - 10)(100 - 2p1 + p2) + (p2 - 15)(80 - p2 + 0.5p1)
+\)
+
+Restrições:
+
+- Não negatividade:
+  \(
+  p1 \geq 0, \quad p2 \geq 0
+  \)
+
+```{r echo=FALSE}
+maximizar_lucro <- function() {
+  f_objetivo <- function(x) {
+    x1 <- x[1]
+    x2 <- x[2]
+    D1 <- 100 - 2 * x1 + x2
+    D2 <- 80 - x2 + 0.5 * x1
+    lucro <- (x1 - 10) * D1 + (x2 - 15) * D2
+    return(-lucro)
+  }
+  
+  p <- c(20, 20)
+
+  results <- optim(par = p, 
+                     fn = f_objetivo, 
+                     method = "L-BFGS-B", 
+                     lower = c(10, 15),
+                     upper = c(10000, 10000), 
+                     control = list(fnscale = 1))
+  
+  return(list(precos_otimos = results$par,
+              lucro_maximo = -results$value))
+}
+
+maximizar_lucro()
+```
+
+
